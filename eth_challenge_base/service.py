@@ -15,9 +15,12 @@ from twirp.exceptions import InvalidArgument, RequiredArgument, TwirpServerExcep
 
 from eth_challenge_base.config import Config, parse_config
 from eth_challenge_base.ethereum import Account, Contract
+from eth_challenge_base.sui_challenge_service import SuiChallengeService
 from eth_challenge_base.protobuf import (  # type: ignore[attr-defined]
     challenge_pb2,
     challenge_twirp,
+    sui_challenge_pb2,
+    sui_challenge_twirp,
 )
 
 AUTHORIZATION_KEY = "authorization"
@@ -196,9 +199,14 @@ class ChallengeService:
         return Account(decoded_token.payload.decode("utf-8"))  # type: ignore[union-attr]
 
 
-def create_asgi_application(project_root: str) -> TwirpASGIApp:
+def create_asgi_application(project_root: str, move_mode: bool) -> TwirpASGIApp:
     config = parse_config(os.path.join(project_root, "challenge.yml"))
     application = TwirpASGIApp()
-    service = ChallengeService(project_root, config)
-    application.add_service(challenge_twirp.ChallengeServer(service=service))
+    if move_mode:
+        service = SuiChallengeService(project_root, config)
+        application.add_service(sui_challenge_twirp.SuiChallengeServer(service=service))
+    else:
+        service = ChallengeService(project_root, config)
+        application.add_service(challenge_twirp.ChallengeServer(service=service))
+
     return application

@@ -135,3 +135,5 @@ reports/
 # other
 .idea/
 .DS_Store
+
+sui.log.*

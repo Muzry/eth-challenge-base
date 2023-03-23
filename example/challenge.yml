@@ -5,7 +5,7 @@ description: |
   We design a pretty easy contract challenge. Enjoy it!
   Your goal is to make isSolved() function returns true!
 
-flag: flag{placeholder}
+flag: flag{check in}
 
 constructor:
   args: ["hello"]
