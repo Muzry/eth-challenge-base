@@ -2,6 +2,9 @@ dev:
 	cd example && brownie compile
 	DEBUG_MODE=True uvicorn server:app --reload
 
+dev-sui:
+	DEBUG_MODE=True MOVE_MODE=True uvicorn server:app --reload
+
 protoc:
 	docker build --target protoc -t protoc --platform linux/amd64 .
 	docker run --name protoc protoc

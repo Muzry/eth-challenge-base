@@ -2,8 +2,8 @@
 import os
 import signal
 
-from eth_challenge_base.ui import UserInterface
+from eth_challenge_base.sui_ui import SuiUserInterface
 
 if __name__ == "__main__":
     signal.alarm(60)
-    UserInterface().run()
+    SuiUserInterface().run()

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package chainflag.ctf.challenge;
-option go_package = "challenge";
+package chainflag.ctf.sui_challenge;
+option go_package = "sui_challenge";
 
 message Info {
   string description = 1;
@@ -35,11 +35,10 @@ message SourceCode {
 
 message Empty {}
 
-service Challenge {
+service SuiChallenge {
   rpc GetChallengeInfo(Empty) returns (Info);
   rpc NewPlayground(Empty) returns (Playground);
   rpc DeployContract(Empty) returns (Contract);
   rpc GetFlag(Event) returns (Flag);
   rpc GetSourceCode(Empty) returns (SourceCode);
 }
-

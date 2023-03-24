@@ -15,6 +15,8 @@ class Constructor:
 class Config:
     contract: str
     description: str
+    module: str
+    flag: str
     show_source: bool
     solved_event: str
     constructor: Constructor
@@ -26,10 +28,12 @@ def parse_config(path: str) -> Config:
 
     show_source = config.get("show_source", True)
     solved_event = config.get("solved_event", "")
+    module = config.get("module", "")
     constructor = config.get("constructor", {})
     constructor_args = constructor.get("args", ())
     constructor_value = constructor.get("value", 0)
     constructor_gas = constructor.get("gas", 0)
+    flag = constructor.get("flag", "flag{placeholder}")
 
     if constructor_value is None or constructor_value < 0:
         constructor_value = 0
@@ -37,6 +41,8 @@ def parse_config(path: str) -> Config:
     return Config(
         config["contract"],
         config["description"],
+        module,
+        flag,
         show_source,
         solved_event,
         Constructor(tuple(constructor_args), constructor_value, constructor_gas),

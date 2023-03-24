@@ -9,8 +9,6 @@ from twirp.context import Context
 from twirp.exceptions import TwirpServerException
 
 from eth_challenge_base.protobuf import (  # type: ignore[attr-defined]
-    challenge_pb2,
-    challenge_twirp,
     sui_challenge_pb2,
     sui_challenge_twirp,
 )
@@ -23,11 +21,11 @@ class Action:
     handler: Callable[[], None]
 
 
-class UserInterface:
+class SuiUserInterface:
     def __init__(self, address: str = "http://localhost:8000") -> None:
-        self._client = challenge_twirp.ChallengeClient(address)
+        self._client = sui_challenge_twirp.SuiChallengeClient(address)
         self._info = self._client.GetChallengeInfo(
-            ctx=Context(), request=challenge_pb2.Empty()
+            ctx=Context(), request=sui_challenge_pb2.Empty()
         )
         self._actions = self._create_actions()
 
@@ -92,20 +90,20 @@ class UserInterface:
 
     def _handle_new_playground(self) -> None:
         response = self._client.NewPlayground(
-            ctx=Context(), request=challenge_pb2.Empty()
+            ctx=Context(), request=sui_challenge_pb2.Empty()
         )
 
         print(f"[+] deployer account: {response.address}")
         print(f"[+] token: {response.token}")
         print(
-            f"[+] please transfer more than {round(response.value, 3)} test ether to the deployer account for next step"
+            f"[+] please transfer more than {round(response.value, 3)} test sui to the deployer account for next step"
         )
 
     def _handle_deploy_contract(self) -> None:
         token: str = input("[-] input your token: ").strip()
         context = Context(headers={AUTHORIZATION_KEY: token})
         response = self._client.DeployContract(
-            ctx=context, request=challenge_pb2.Empty()
+            ctx=context, request=sui_challenge_pb2.Empty()
         )
 
         print(f"[+] contract address: {response.address}")
@@ -114,19 +112,19 @@ class UserInterface:
     def _handle_get_flag(self) -> None:
         token: str = input("[-] input your token: ").strip()
         context = Context(headers={AUTHORIZATION_KEY: token})
-        request = challenge_pb2.Event()
+        request = sui_challenge_pb2.Event()
         if self._info.solved_event:
             tx_hash = input(
                 f"[-] input tx hash that emitted {self._info.solved_event} event: "
             ).strip()
-            request = challenge_pb2.Event(tx_hash=tx_hash)
+            request = sui_challenge_pb2.Event(tx_hash=tx_hash)
 
         response = self._client.GetFlag(ctx=context, request=request)
         print(f"[+] flag: {response.flag}")
 
     def _handle_get_sourcecode(self) -> None:
         response = self._client.GetSourceCode(
-            ctx=Context(), request=challenge_pb2.Empty()
+            ctx=Context(), request=sui_challenge_pb2.Empty()
         )
         source = response.source
         for key, value in source.items():
