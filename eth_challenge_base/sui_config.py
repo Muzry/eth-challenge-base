@@ -16,6 +16,7 @@
 
 
 import os
+import fcntl
 from io import TextIOWrapper
 
 from pathlib import Path
@@ -75,6 +76,7 @@ class SuiConfig(ClientConfiguration):
             self._address_keypair = {}
             try:
                 with open(keystore_file, encoding="utf8") as keyfile:
+                    fcntl.flock(keyfile, fcntl.LOCK_EX)
                     self._keystrings = json.load(keyfile)
                     if len(self._keystrings) > 0:
                         for keystr in self._keystrings:
@@ -83,7 +85,7 @@ class SuiConfig(ClientConfiguration):
                             addy = SuiAddress.from_keypair_string(kpair.to_b64())
                             self._addresses[addy.address] = addy
                             self._address_keypair[addy.address] = kpair
-                            # print(f"Address: {addy.address} keystr: {keystr} Keypair: {kpair}")
+                    fcntl.flock(keyfile, fcntl.LOCK_UN)
             except IOError as exc:
                 raise SuiKeystoreFileError(exc) from exc
             except json.JSONDecodeError as exc:
@@ -96,8 +98,10 @@ class SuiConfig(ClientConfiguration):
         filepath = file_path if file_path else self.keystore_file
         if os.path.exists(filepath):
             self._keypairs[keypair.serialize()] = keypair
-            with open(filepath, "w", encoding="utf8") as keystore:
-                keystore.write(json.dumps(self.keystrings, indent=2))
+            with open(filepath, "w", encoding="utf8") as keyfile:
+                fcntl.flock(keyfile, fcntl.LOCK_EX)
+                keyfile.write(json.dumps(self.keystrings, indent=2))
+                fcntl.flock(keyfile, fcntl.LOCK_UN)
         else:
             raise SuiFileNotFound((filepath))
 

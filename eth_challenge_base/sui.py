@@ -5,10 +5,7 @@ from pysui.sui.sui_utils import build_b64_modules
 from pysui.abstracts import SignatureScheme
 from pysui.sui.sui_clients.sync_client import SuiClient, SuiAddress, SuiMap
 
-from pysui.sui.sui_crypto import (
-    keypair_from_keystring,
-    create_new_address,
-)
+from pysui.sui.sui_crypto import keypair_from_keystring
 
 
 class SuiAccount:
@@ -28,15 +25,14 @@ class SuiAccount:
         key_store = b"\x00" + key_pair.private_key.key_bytes
         self.key_store = base64.standard_b64encode(key_store).decode("utf-8")
 
-    def balance(self, client) -> int:
-        client.config.set_active_address(self.address)
+    def balance(self, client: SuiClient) -> int:
         result = client._get_coins_for_type(self.address)
         balance = 0
         for item in result.result_data.data:
             balance = balance + item.balance
         return balance
 
-    def get_deployment_address(self, client: SuiClient):
+    def get_deployment_address(self, client):
         result = client.get_events(
             query=SuiMap("Sender", self.address),
             cursor=None,
@@ -55,7 +51,7 @@ class SuiContract:
         self.contract_name = contract_name
         self.contract_module = contract_module
 
-    def get_publish_args(self, address, project_root, client: SuiClient):
+    def get_publish_args(self, address, project_root, client):
         result = client._get_coins_for_type(address)
         object_id = ""
         for item in result.result_data.data:
@@ -70,23 +66,23 @@ class SuiContract:
             "gas_budget": 3000,
         }
 
-    def get_deployment_info(self, client: SuiClient):
+    def get_deployment_info(self, client: SuiClient, account):
         result = client.get_events(
-            query=SuiMap("Sender", client.config.active_address),
+            query=SuiMap("Sender", account.address),
             cursor=None,
             limit=None,
             descending_order=False,
         )
         for item in result.result_data.data:
             publish = item.event.get("publish", None)
-            if publish and publish.sender == client.config.active_address:
+            if publish and publish.sender == account.address:
                 return item.transaction_digest, publish.package_id
         return "", ""
 
-    def publish(self, client, account, project_root):
-        var_args = self.get_publish_args(account.address, Path(project_root), client)
+    def publish(self, client, account, contract_path):
+        var_args = self.get_publish_args(account.address, Path(contract_path), client)
         client.publish_package_txn(**var_args)
-        return self.get_deployment_info(client)
+        return self.get_deployment_info(client, account)
 
     def is_solved(
         self,

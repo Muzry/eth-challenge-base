@@ -16,10 +16,10 @@ service ctf
     port            = 20000
     bind            = 0.0.0.0
     server          = /usr/local/bin/python3
-    server_args     = /home/ctf/client.py
+    server_args     = /home/ctf/sui_client.py
     per_source      = ${PER_SOURCE:-4}
     cps             = ${CPS_RATE:-200} ${CPS_DELAY:-5}
-    rlimit_cpu      = ${RLIMIT_CPU:-5}
+    rlimit_cpu      = ${RLIMIT_CPU:-20}
 }
 EOF
 

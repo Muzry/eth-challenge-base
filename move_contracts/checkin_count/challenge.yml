@@ -4,14 +4,15 @@ module: checkin
 # The description will be displayed when players nc to the challenge
 description: |
   We design a pretty easy contract challenge. Enjoy it!
-  Your goal is to make HelloHackers() function emit Flag event
+  Your goal is to make isSolved() function emit Flag event
 
-flag: flag{0xa42b74e153b78f8ccdabb2c5925ab86496e68d96}
+flag: flag{check in}
 
 constructor:
+  args: ["hello"]
   value: 1
-  gas: 10000          # The default value is the response value of the eth_estimateGas JSON-RPC
+  gas: 1000000          # The default value is the response value of the eth_estimateGas JSON-RPC
 
-show_source: False      # Show source option available by default, you need to set False for a reverse contract challenge
+#show_source: False      # Show source option available by default, you need to set False for a reverse contract challenge
 
 solved_event: Flag  # The default is to use isSolved() view function as solved checker, but emitted event checker is also supported

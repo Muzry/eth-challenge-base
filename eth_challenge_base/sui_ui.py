@@ -12,7 +12,7 @@ from eth_challenge_base.protobuf import (  # type: ignore[attr-defined]
     sui_challenge_pb2,
     sui_challenge_twirp,
 )
-from eth_challenge_base.service import AUTHORIZATION_KEY
+from eth_challenge_base.sui_challenge_service import AUTHORIZATION_KEY
 
 
 @dataclass
@@ -120,7 +120,7 @@ class SuiUserInterface:
             request = sui_challenge_pb2.Event(tx_hash=tx_hash)
 
         response = self._client.GetFlag(ctx=context, request=request)
-        print(f"[+] flag: {response.flag}")
+        print(f"[+] flag is: {response.flag}")
 
     def _handle_get_sourcecode(self) -> None:
         response = self._client.GetSourceCode(
