@@ -29,11 +29,11 @@ def parse_config(path: str) -> Config:
     show_source = config.get("show_source", True)
     solved_event = config.get("solved_event", "")
     module = config.get("module", "")
+    flag = config.get("flag", "flag{placeholder}")
     constructor = config.get("constructor", {})
     constructor_args = constructor.get("args", ())
     constructor_value = constructor.get("value", 0)
     constructor_gas = constructor.get("gas", 0)
-    flag = constructor.get("flag", "flag{placeholder}")
 
     if constructor_value is None or constructor_value < 0:
         constructor_value = 0

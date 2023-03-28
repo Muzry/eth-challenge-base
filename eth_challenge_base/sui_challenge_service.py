@@ -1,26 +1,21 @@
 import os
+import pyseto
+
 from decimal import Decimal
 from glob import glob
 from typing import Dict
-
-import pyseto
-from eth_utils import units
 from pyseto import Token
+from eth_challenge_base.config import Config, parse_config
 from twirp import ctxkeys, errors
+from twirp.asgi import TwirpASGIApp
 from twirp.exceptions import RequiredArgument, TwirpServerException
-from eth_challenge_base.config import Config
 from eth_challenge_base.sui_config import SuiConfig
-from eth_challenge_base.sui import (
-    SuiAccount,
-    SuiContract,
-    SuiClient,
-)
-from eth_challenge_base.protobuf import (  # type: ignore[attr-defined]
-    sui_challenge_pb2,
-    sui_challenge_twirp,
-)
+from eth_challenge_base.sui import SuiAccount, SuiContract, SuiClient
+from eth_challenge_base.protobuf import sui_challenge_pb2, sui_challenge_twirp
 
 AUTHORIZATION_KEY = "authorization"
+
+unit = Decimal("1000000000")
 
 
 class SuiChallengeService:
@@ -36,14 +31,6 @@ class SuiChallengeService:
         self._contract: SuiContract = SuiContract(
             self._config.contract,
             self._config.module,
-        )
-        self.client = SuiClient(
-            SuiConfig(
-                config_path=os.getenv("SUI_CLIENT_CONFIG"),
-                env=os.getenv("SUI_ENV"),
-                keystore_file=os.getenv("SUI_KEYSTORE_FILE"),
-                current_url=os.getenv("SUI_PROVIDER_URL"),
-            )
         )
         self._source_code: Dict[str, str] = self._load_challenge_sui_source(
             artifact_path
@@ -62,7 +49,8 @@ class SuiChallengeService:
         )
 
     def NewPlayground(self, context, empty):
-        account: SuiAccount = SuiAccount(self.client)
+        client = self.new_client()
+        account: SuiAccount = SuiAccount(client)
         token: str = pyseto.encode(
             self._token_key, payload=account.key_store, footer=self._config.contract
         ).decode("utf-8")
@@ -76,11 +64,10 @@ class SuiChallengeService:
                 message=str(e),
             )
 
-        sui_value: Decimal = Decimal(total_value) / units.units["gwei"] + Decimal(
-            "0.001"
-        )
+        sui_value: Decimal = Decimal(total_value) / unit + Decimal("0.001")
 
         context.get_logger().info("Playground account %s was created", account.address)
+        context.get_logger().info(f"address list is: {client.config.addresses}")
         return sui_challenge_pb2.Playground(
             address=account.address,
             token=token,
@@ -88,22 +75,29 @@ class SuiChallengeService:
         )
 
     def DeployContract(self, context, empty):
+        client = self.new_client()
         account: SuiAccount = self._recoverAcctFromCtx(context)
-        if account.balance(self.client) == 0:
+        if account.balance(client) == 0:
             raise TwirpServerException(
                 code=errors.Errors.FailedPrecondition,
                 message=f"send test sui to {account.address} first",
             )
 
-        contract_addr: str = account.get_deployment_address(self.client)
+        contract_addr: str = account.get_deployment_address(client)
         if contract_addr != "":
             raise TwirpServerException(
                 code=errors.Errors.FailedPrecondition,
                 message=f"contract {contract_addr} has already deployed",
             )
         try:
+            contract_path = os.path.join(self._project_root, "contracts")
+            context.get_logger().info(
+                f"deployment address list is: {client.config.addresses}"
+            )
             tx_hash, contract_addr = self._contract.publish(
-                self.client, account, self._project_root
+                client,
+                account,
+                contract_path,
             )
         except Exception as e:
             raise TwirpServerException(
@@ -120,8 +114,9 @@ class SuiChallengeService:
         return sui_challenge_pb2.Contract(address=contract_addr, tx_hash=tx_hash)
 
     def GetFlag(self, context, event):
+        client = self.new_client()
         account: SuiAccount = self._recoverAcctFromCtx(context)
-        contract_addr: str = account.get_deployment_address(self.client)
+        contract_addr: str = account.get_deployment_address(client)
         if contract_addr == "":
             raise TwirpServerException(
                 code=errors.Errors.FailedPrecondition,
@@ -132,7 +127,7 @@ class SuiChallengeService:
         tx_hash = event.tx_hash.strip()
         try:
             is_solved = self._contract.is_solved(
-                self.client,
+                client,
                 contract_addr,
                 self._config.solved_event,
                 tx_hash,
@@ -156,12 +151,6 @@ class SuiChallengeService:
         )
 
         flag: str = self._config.flag
-        file = os.path.join(self._project_root, "flag.txt")
-        try:
-            with open(file) as fp:
-                flag = fp.readline()
-        except FileNotFoundError:
-            context.get_logger().warn(f"flag file {file} not found")
         return sui_challenge_pb2.Flag(flag=flag)
 
     def GetSourceCode(self, context, token):
@@ -197,3 +186,21 @@ class SuiChallengeService:
             )
 
         return SuiAccount(keystring=decoded_token.payload.decode("utf-8"))  # type: ignore[union-attr]
+
+    def new_client(self):
+        return SuiClient(
+            SuiConfig(
+                config_path=os.getenv("SUI_CLIENT_CONFIG"),
+                env=os.getenv("SUI_ENV"),
+                keystore_file=os.getenv("SUI_KEYSTORE_FILE"),
+                current_url=os.getenv("SUI_PROVIDER_URL"),
+            )
+        )
+
+
+def create_asgi_application(project_root: str) -> TwirpASGIApp:
+    config = parse_config(os.path.join(project_root, "challenge.yml"))
+    application = TwirpASGIApp()
+    service = SuiChallengeService(project_root, config)
+    application.add_service(sui_challenge_twirp.SuiChallengeServer(service=service))
+    return application

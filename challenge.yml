@@ -6,7 +6,7 @@ description: |
   We design a pretty easy contract challenge. Enjoy it!
   Your goal is to make HelloHackers() function emit Flag event
 
-flag: flag{0xa42b74e153b78f8ccdabb2c5925ab86496e68d96}
+flag: flag{check in}
 
 constructor:
   value: 1

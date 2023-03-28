@@ -3,7 +3,7 @@ dev:
 	DEBUG_MODE=True uvicorn server:app --reload
 
 dev-sui:
-	DEBUG_MODE=True MOVE_MODE=True uvicorn server:app --reload
+	uvicorn server:app --reload
 
 protoc:
 	docker build --target protoc -t protoc --platform linux/amd64 .
