@@ -3,7 +3,7 @@ name = "checkin"
 version = "0.0.1"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "devnet" }
+Sui = { local = "/root/.move/https___github_com_MystenLabs_sui_git_devnet/crates/sui-framework" }
 
 [addresses]
 checkin =  "0x0"

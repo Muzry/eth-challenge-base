@@ -27,7 +27,7 @@ class SuiChallengeService:
                 message=f"To solve the SUI challenge, the 'solve_event' parameter is required and cannot be left empty.",
             )
         self._project_root = project_root
-        artifact_path = os.path.join(self._project_root, "sources")
+        artifact_path = os.path.join(self._project_root, "contracts", "sources")
         self._contract: SuiContract = SuiContract(
             self._config.contract,
             self._config.module,

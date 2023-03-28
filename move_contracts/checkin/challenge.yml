@@ -5,6 +5,7 @@ module: checkin
 description: |
   We design a pretty easy contract challenge. Enjoy it!
   Your goal is to make HelloHackers() function emit Flag event
+  Attention: We deployed the SUI node's devnet-v0.27 version. Please build the SUI client on your own.
 
 flag: flag{0xa42b74e153b78f8ccdabb2c5925ab86496e68d96}
 
@@ -12,6 +13,6 @@ constructor:
   value: 1
   gas: 10000          # The default value is the response value of the eth_estimateGas JSON-RPC
 
-show_source: False      # Show source option available by default, you need to set False for a reverse contract challenge
+#show_source: False      # Show source option available by default, you need to set False for a reverse contract challenge
 
 solved_event: Flag  # The default is to use isSolved() view function as solved checker, but emitted event checker is also supported

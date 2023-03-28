@@ -52,7 +52,7 @@ RUN pip install pipenv
 COPY Pipfile Pipfile.lock .
 RUN pipenv install --system
 
-RUN git clone -b 157ac7 https://github.com/MystenLabs/sui.git /root/.move/https___github_com_MystenLabs_sui_git_devnet
+RUN git clone -b devnet-0.27.1 https://github.com/MystenLabs/sui.git /root/.move/https___github_com_MystenLabs_sui_git_devnet
 
 COPY sui_client.py .
 COPY server.py .
